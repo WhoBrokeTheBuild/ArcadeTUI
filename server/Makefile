@@ -19,7 +19,7 @@ SHARED_LIB_DIR = $(SHARED_DIR)/build
 
 CXXFLAGS += -g -Wall -std=c++11 -I$(SRC_DIR) -I$(SHARED_INC_DIR)
 LDFLAGS  += -L$(SHARED_LIB_DIR)
-LDLIBS   += -l$(SHARED_LIB)
+LDLIBS   += -l$(SHARED_LIB) -lpthread
 
 # Dynamically get the sources/objects/tests
 

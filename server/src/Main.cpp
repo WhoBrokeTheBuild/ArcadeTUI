@@ -6,30 +6,30 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <sys/ioctl.h>
+#include <thread>
+#include <iostream>
 
 #include "Args.hpp"
 #include "ArcadeServer.hpp"
 
-int main(int argc, char** argv)
-{
-    Args args = parse_args(argc, argv);
+bool g_running = true;
 
-    printf("ArcadeTUI Server listening\n");
-    
+void listen_thread()
+{
     int sock = socket(AF_UNIX, SOCK_STREAM, 0);
     if (sock < 0) {
         printf("Failed to open server socket\n");
-        return 1;
+        return;
     }
 
     struct sockaddr_un saddr = { AF_UNIX, "arcadetui.sock" };
     bind(sock, (struct sockaddr*)&saddr, sizeof(saddr));
 
     listen(sock, 10);
-    
+
     char message[] = "Hello, goodbye\n";
     int client;
-    for(;;) {
+    while (g_running) {
         client = accept(sock, NULL, NULL);
         printf("Connection established\n");
 
@@ -37,9 +37,34 @@ int main(int argc, char** argv)
 
         close(client);
     }
-   
+
     shutdown(sock, SHUT_RDWR);
     close(sock);
+}
+
+int main(int argc, char** argv)
+{
+    Args args = parse_args(argc, argv);
+
+    printf("ArcadeTUI Server listening\n");
+    
+    std::thread t(listen_thread);
+    t.detach();
+    
+    string line;
+    
+    g_running = true;
+    printf("> ");    
+    while (getline(std::cin, line)) {
+        if (line == "exit") {
+            g_running = false;
+            break;
+        }
+
+        printf("> ");
+    }
+    
+    t.join();
 
     return 0;
 }
